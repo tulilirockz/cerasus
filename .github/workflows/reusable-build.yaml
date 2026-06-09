@@ -31,15 +31,11 @@ on:
         required: false
         type: boolean
         default: true
-      profiles:
-        description: "Extra mkosi profiles to use"
+      build-args:
+        description: "Build arguments for OCI build"
         required: false
         type: string
         default: ""
-      release:
-        description: "Release to build for"
-        required: false
-        type: string
     secrets:
       SIGNING_SECRET:
         description: "The private key used to sign the image"
@@ -117,9 +113,23 @@ jobs:
           podman --version
 
       - name: Build image
+        env:
+          BUILD_ARGS_RAW: ${{ inputs.build-args }}
         run: |
-          set -e
-          podman build -t "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" -f "images/${IMAGE_NAME}/Containerfile" "images/${IMAGE_NAME}"
+          set -ex
+
+          BUILD_ARGS=()
+          if [ "${BUILD_ARGS_RAW}" != "" ] && [ "${BUILD_ARGS_RAW}" != " " ] && [ "$(tr ',' ' ' <<< "${BUILD_ARGS_RAW}")" != "" ] ; then
+            if grep -qv ',' <<< "${BUILD_ARGS_RAW}" ; then
+              BUILD_ARGS=( "--build-arg" "${BUILD_ARGS_RAW}" )
+            else
+              for BUILD_ARG in $(tr ',' ' ' <<< "${BUILD_ARGS_RAW}") ; do
+                BUILD_ARGS=( "--build-arg" "${BUILD_ARG}" )
+              done
+            fi
+          fi
+          
+          podman build ${BUILD_ARGS[@]} -t "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" -f "images/${IMAGE_NAME}/Containerfile" "images/${IMAGE_NAME}"
       
       - name: Rechunk image
         if: inputs.rechunk

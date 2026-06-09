@@ -1,0 +1,36 @@
+FROM alpine:edge AS jarbuilder
+
+ARG FOLIA_VERSION="26.1.x"
+ARG JAVA_VERSION="25"
+
+RUN apk add -U --no-cache git "openjdk${JAVA_VERSION}-jdk"
+RUN --mount=type=tmpfs,dst=/tmp cd /tmp && \
+  git clone https://github.com/PaperMC/Folia -b "ver/${FOLIA_VERSION}" && \
+  cd Folia && \
+  git config --global user.name "tulip" && \
+  git config --global user.email "tulilirockz@outlook.com" && \
+  ./gradlew applyAllPatches && \
+  ./gradlew createBundlerJar && \
+  install -Dpm0644 -t "/out/usr/share/licenses/folia/" ./PATCHES-LICENSE && \
+  install -Dpm0644 -t "/out/usr/share/doc/folia/" ./README.md && \
+  find . -iname "folia-*.jar" -exec install -Dpm0644 -t "/out/usr/share/java/folia/" {} ';' && \
+  ln -s "$(basename $(find "/out/usr/share/java/folia/folia-bundler"*.jar))" /out/usr/share/java/folia/folia.jar 
+
+FROM alpine:edge AS runtime
+
+ARG FOLIA_VERSION="ver/26.1.x"
+ARG JAVA_VERSION="25"
+
+COPY --from=jarbuilder /out /
+
+RUN apk add -U --no-cache "openjdk${JAVA_VERSION}-jre-headless" udev
+
+RUN echo "nonroot:x:65534:65534:nonroot:/home/nonroot:/usr/sbin/nologin" | tee -a /etc/passwd && \
+  echo "nonroot:x:65534:nonroot" | tee -a /etc/group && \
+  install -dpm0755 /srv/folia
+
+USER nonroot
+
+WORKDIR /srv/folia
+
+CMD [ "java", "-Xms4000M", "-Xmx4000M", "-jar", "/usr/share/java/folia/folia.jar" ]
