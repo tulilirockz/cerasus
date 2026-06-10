@@ -45,7 +45,7 @@ env:
   IMAGE_NAME: ${{ inputs.image-name }}
   IMAGE_DESC: ${{ inputs.image-desc }}
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}"
-  DEFAULT_TAG: "latest"
+  DEFAULT_TAG: "${{ inputs.default-tag }}"
   IMAGE_LICENSE: BSD-3-Clause
   PLATFORMS: ${{ inputs.platforms }}
 

@@ -26,3 +26,4 @@ jobs:
       publish: ${{ github.event_name != 'pull_request' }}
       build-args: FOLIA_VERSION=26.1.x
       default-tag: "26.1"
+      platforms: amd64
