@@ -22,5 +22,5 @@ jobs:
     secrets: inherit
     with:
       image-name: navidrome
-      image-desc: Minimal alpine-based Navidrome DNS image
+      image-desc: Minimal alpine-based navidrome image
       publish: ${{ github.event_name != 'pull_request' }}
