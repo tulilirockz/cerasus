@@ -1,4 +1,4 @@
-name: Build Navidrome image
+name: Build NTFY image
 
 on:
   push:
